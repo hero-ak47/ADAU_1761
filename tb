@@ -1,0 +1,68 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity tb_i2c is
+end entity;
+
+architecture sim of tb_i2c is
+
+    signal clk       : std_logic := '0';
+    signal reset     : std_logic := '1';
+    signal start     : std_logic := '0';
+    signal scl       : std_logic;
+    signal sda       : std_logic := 'H'; -- pull-up mặc định (H = weak high)
+    signal busy      : std_logic;
+    signal done      : std_logic;
+    signal ack_error : std_logic;
+
+    -- for internal SDA tri-state
+    signal sda_out_i2c : std_logic;
+    signal sda_en_i2c  : std_logic;
+
+    -- clock period
+    constant clk_period : time := 10 ns; -- 100 MHz
+
+begin
+
+    -- Clock generation
+    clk <= not clk after clk_period/2;
+
+    -- DUT
+    uut: entity work.i2c_adau1761
+        port map (
+            clk         => clk,
+            reset       => reset,
+            start       => start,
+            scl         => scl,
+            sda         => sda,
+            busy        => busy,
+            done        => done,
+            ack_error   => ack_error,
+            sda_out_i2c => sda_out_i2c,
+            sda_en_i2c  => sda_en_i2c
+        );
+
+    -- SDA tri-state model (pull-up)
+  --  sda <= '0' when sda_en_i2c = '0' else 'H';
+
+    -- Stimulus
+    stim_proc: process
+    begin
+        -- Reset giữ 100 ns
+        reset <= '0';
+        wait for 100 ns;
+        reset <= '1';
+
+        -- Sau 200 ns phát start
+        wait for 200 ns;
+        start <= '1';
+        wait for clk_period;
+        start <= '0';
+
+        -- chạy lâu để xem clock
+        
+        wait;
+    end process;
+
+end architecture;
